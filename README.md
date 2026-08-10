@@ -12,6 +12,7 @@ La conversación (memoria) de cada comensal se guarda en la hoja "Conversaciones
 4. Le pasa todo el contexto a Claude (Haiku) para generar una respuesta humana.
 5. Envía la respuesta por WhatsApp y guarda el mensaje nuevo en el historial.
 6. Si el comensal pide un asesor, avisa por WhatsApp al número configurado.
+7. Si el comensal reporta una queja o sugerencia, la guarda en la hoja **Quejas**.
 
 ## 1. Prepara tu hoja de Google Sheets
 
@@ -20,7 +21,16 @@ Usa la misma hoja donde ya tienes "Catalogo Sucursales" (Ciudad/Estado/Sucursal/
 Agrega una pestaña nueva llamada **Conversaciones** con estos encabezados en la fila 1:
 
 ```
-Telefono | Nombre | Historial | Ciudad | UltimaActualizacion
+Telefono | Nombre | Historial | Ciudad | Estado | UltimaActualizacion
+```
+
+El "Estado" se llena solo: en cuanto el bot detecta la ciudad del comensal, la busca en el
+catálogo de sucursales y guarda el Estado correspondiente — no hace falta pedírselo aparte.
+
+Agrega otra pestaña llamada **Quejas** con estos encabezados en la fila 1:
+
+```
+Fecha | Telefono | Nombre | Ciudad | Detalle
 ```
 
 ## 2. Crea una cuenta de servicio de Google (para que el bot pueda leer/escribir Sheets)
@@ -49,6 +59,7 @@ Copia `.env.example` a `.env` y llena cada valor:
 - `ANTHROPIC_API_KEY`: la key del paso 3.
 - `GOOGLE_SERVICE_ACCOUNT_JSON`: el JSON del paso 2, en una sola línea.
 - `SHEET_ID`: el ID de tu hoja (está en la URL, entre `/d/` y `/edit`).
+- `SHEET_QUEJAS`: nombre de la pestaña de quejas y sugerencias (por defecto `Quejas`).
 - `ASESOR_WHATSAPP_NUMERO`: el número del colaborador de Atención al Cliente.
 
 ## 5. Prueba local (opcional, requiere Node.js instalado)

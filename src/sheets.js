@@ -3,6 +3,7 @@ const { google } = require("googleapis");
 const SHEET_ID = process.env.SHEET_ID;
 const SHEET_CATALOGO = process.env.SHEET_CATALOGO || "Catalogo Sucursales";
 const SHEET_CONVERSACIONES = process.env.SHEET_CONVERSACIONES || "Conversaciones";
+const SHEET_QUEJAS = process.env.SHEET_QUEJAS || "Quejas";
 const MAX_MENSAJES_HISTORIAL = 12; // últimos N mensajes que se guardan por comensal
 
 // Los nombres de hoja con espacios o guiones DEBEN ir entre comillas simples en notación A1.
@@ -52,13 +53,13 @@ async function getConversacion(telefono) {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: rango(SHEET_CONVERSACIONES, "A:E"),
+    range: rango(SHEET_CONVERSACIONES, "A:F"),
   });
   const rows = res.data.values || [];
   const rowIndex = rows.findIndex((r) => r[0] === telefono);
 
   if (rowIndex === -1) {
-    return { rowNumber: null, telefono, nombre: "", historial: [], ciudad: "" };
+    return { rowNumber: null, telefono, nombre: "", historial: [], ciudad: "", estado: "" };
   }
 
   const row = rows[rowIndex];
@@ -75,11 +76,12 @@ async function getConversacion(telefono) {
     nombre: row[1] || "",
     historial,
     ciudad: row[3] || "",
+    estado: row[4] || "",
   };
 }
 
 // Guarda (upsert) la conversación actualizada del comensal
-async function guardarConversacion({ rowNumber, telefono, nombre, historial, ciudad }) {
+async function guardarConversacion({ rowNumber, telefono, nombre, historial, ciudad, estado }) {
   const sheets = await getSheetsClient();
   const historialRecortado = historial.slice(-MAX_MENSAJES_HISTORIAL);
   const valores = [
@@ -87,20 +89,21 @@ async function guardarConversacion({ rowNumber, telefono, nombre, historial, ciu
     nombre,
     JSON.stringify(historialRecortado),
     ciudad || "",
+    estado || "",
     new Date().toISOString(),
   ];
 
   if (rowNumber) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: rango(SHEET_CONVERSACIONES, `A${rowNumber}:E${rowNumber}`),
+      range: rango(SHEET_CONVERSACIONES, `A${rowNumber}:F${rowNumber}`),
       valueInputOption: "RAW",
       requestBody: { values: [valores] },
     });
   } else {
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: rango(SHEET_CONVERSACIONES, "A:E"),
+      range: rango(SHEET_CONVERSACIONES, "A:F"),
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
       requestBody: { values: [valores] },
@@ -108,8 +111,23 @@ async function guardarConversacion({ rowNumber, telefono, nombre, historial, ciu
   }
 }
 
+// Agrega una queja o sugerencia como fila nueva en la hoja "Quejas"
+async function guardarQueja({ telefono, nombre, ciudad, detalle }) {
+  const sheets = await getSheetsClient();
+  const valores = [new Date().toISOString(), telefono, nombre || "", ciudad || "", detalle];
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: rango(SHEET_QUEJAS, "A:E"),
+    valueInputOption: "RAW",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: { values: [valores] },
+  });
+}
+
 module.exports = {
   getCatalogoSucursales,
   getConversacion,
   guardarConversacion,
+  guardarQueja,
 };

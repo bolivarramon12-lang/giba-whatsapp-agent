@@ -1,7 +1,12 @@
 require("dotenv").config();
 const express = require("express");
 const { extraerMensajeEntrante, enviarMensaje } = require("./src/whatsapp");
-const { getCatalogoSucursales, getConversacion, guardarConversacion } = require("./src/sheets");
+const {
+  getCatalogoSucursales,
+  getConversacion,
+  guardarConversacion,
+  guardarQueja,
+} = require("./src/sheets");
 const { generarRespuesta } = require("./src/claude");
 
 const app = express();
@@ -72,7 +77,7 @@ app.post("/webhook", async (req, res) => {
     // (Esta bandera la puedes poner tú manualmente en Sheets, columna "ciudad" no aplica;
     // si ya migraste la lógica de "en_atencion" desde Make, se puede añadir aquí igual.)
 
-    const { texto: respuesta, requiereAsesor } = await generarRespuesta({
+    const { texto: respuesta, requiereAsesor, ciudadDetectada, queja } = await generarRespuesta({
       historial: conversacion.historial,
       mensajeNuevo: texto,
       catalogo,
@@ -86,13 +91,35 @@ app.post("/webhook", async (req, res) => {
       { role: "assistant", content: respuesta },
     ];
 
+    // Si Claude detectó la ciudad en este turno, buscamos su Estado en el
+    // catálogo para no tener que preguntárselo aparte al comensal.
+    let ciudad = conversacion.ciudad;
+    let estado = conversacion.estado;
+    if (ciudadDetectada) {
+      const sucursal = catalogo.find(
+        (s) => s.Ciudad.toLowerCase() === ciudadDetectada.toLowerCase()
+      );
+      ciudad = sucursal ? sucursal.Ciudad : ciudadDetectada;
+      estado = sucursal ? sucursal.Estado : estado;
+    }
+
     await guardarConversacion({
       rowNumber: conversacion.rowNumber,
       telefono,
       nombre: nombre || conversacion.nombre,
       historial: nuevoHistorial,
-      ciudad: conversacion.ciudad,
+      ciudad,
+      estado,
     });
+
+    if (queja) {
+      await guardarQueja({
+        telefono,
+        nombre: nombre || conversacion.nombre,
+        ciudad,
+        detalle: queja,
+      });
+    }
 
     if (requiereAsesor && ASESOR_WHATSAPP_NUMERO) {
       await enviarMensaje(
