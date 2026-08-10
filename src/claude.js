@@ -8,6 +8,14 @@ const HORARIO_NACIONAL =
 
 const LINK_FACTURACION = "https://www.wansoft.net/LasEspadas/FE.html";
 const LINK_RESERVACIONES = "https://widget.riservi.com/sucursales/Las-Espadas-qkn";
+const CORREO_FACTURACION_RESPALDO = "mkt@lasespadas.mx";
+
+const PRECIOS_RODIZIO = `- Rodízio completo (espadas + barra buffet): $449 por persona
+- Solo barra buffet: $319 por persona
+- Niños menores de 1 metro: $139
+- Niños de 1 a 1.40 metros: $269
+- Niños de más de 1.40 metros: precio de adulto
+(Bebidas y postres no están incluidos)`;
 
 function formatearCatalogo(catalogo) {
   if (!catalogo.length) return "No hay sucursales cargadas por el momento.";
@@ -37,10 +45,16 @@ ${
 
 INFORMACIÓN QUE PUEDES USAR:
 - Horario nacional (igual en todas las sucursales): ${HORARIO_NACIONAL}
-- Portal de facturación: ${LINK_FACTURACION}
+- Portal de facturación: ${LINK_FACTURACION}. Si el comensal no logra facturar ahí, pídele que mande su ticket y su constancia de situación fiscal al correo ${CORREO_FACTURACION_RESPALDO}.
 - Link para hacer reservaciones: ${LINK_RESERVACIONES}
+- Precios del rodízio (nacionales, salvo que el catálogo indique una promoción distinta para su ciudad):
+${PRECIOS_RODIZIO}
 - Catálogo de sucursales (dirección, teléfono y promociones por ciudad):
 ${formatearCatalogo(catalogo)}
+
+PRECIOS:
+- Cuando compartas precios, preséntalos en lista (uno por línea, como arriba), nunca como párrafo corrido — así se lee más fácil en WhatsApp.
+- Si el comensal solo pregunta por el precio general, no hace falta que le mandes las cuatro categorías de niños de una vez; puedes empezar con el precio de adulto y ofrecer el detalle de menores si lo pide.
 
 CÓMO MANEJAR LA CIUDAD DEL COMENSAL:
 - Si en la conversación aún no sabes de qué ciudad escribe el comensal y te pregunta algo que depende de la sucursal (dirección, teléfono, promociones), pregúntale primero amablemente en qué ciudad se encuentra.
