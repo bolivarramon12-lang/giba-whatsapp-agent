@@ -15,8 +15,16 @@ app.use(express.json());
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const ASESOR_WHATSAPP_NUMERO = process.env.ASESOR_WHATSAPP_NUMERO;
 
-const MENSAJE_BIENVENIDA =
-  "Bienvenido a Las Espadas Brazilian Steakhouse, estoy aqui para ayudarte con Horarios, Ubicaciones, Reservaciones, quejas y/o Sujerencias  o Promociones (En listado) o si necesitas hablar con uno de nuestros agentes, estamos para atenderte";
+const MENSAJE_BIENVENIDA = `Bienvenido a Las Espadas Brazilian Steakhouse, estoy aquí para ayudarte con:
+
+- Horarios
+- Ubicaciones
+- Reservaciones
+- Quejas y/o Sugerencias
+- Promociones
+- Hablar con uno de nuestros agentes
+
+¡Estamos para atenderte!`;
 
 // Meta reenvía el mismo mensaje si tardamos en responder. Guardamos los IDs ya
 // procesados para no contestarle dos veces al comensal.
