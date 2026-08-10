@@ -61,7 +61,6 @@ app.post("/webhook", async (req, res) => {
   if (yaProcesado(entrante.id)) return;
 
   const { telefono, nombre, texto } = entrante;
-  console.log("DEBUG telefono entrante:", JSON.stringify(telefono));
 
   try {
     const [conversacion, catalogo] = await Promise.all([
