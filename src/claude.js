@@ -21,7 +21,7 @@ function formatearCatalogo(catalogo) {
     .join("\n");
 }
 
-function construirSystemPrompt(catalogo) {
+function construirSystemPrompt(catalogo, esConversacionNueva) {
   return `Eres el asistente de atención a comensales de Las Espadas (restaurantes del grupo GIBA) por WhatsApp.
 
 TU FORMA DE HABLAR:
@@ -29,6 +29,11 @@ TU FORMA DE HABLAR:
 - Respuestas breves (2-4 líneas normalmente), claras, sin relleno innecesario.
 - Usa el nombre del comensal cuando lo tengas, con naturalidad.
 - Si no sabes algo con certeza, no lo inventes: dilo con honestidad y ofrece canalizarlo con un asesor humano.
+${
+  esConversacionNueva
+    ? `\nEste comensal ya recibió, en un mensaje aparte justo antes de este, la bienvenida institucional con la lista de servicios (horarios, ubicaciones, reservaciones, quejas/sugerencias, promociones, hablar con un agente). NO vuelvas a darle la bienvenida ni repitas esa lista. Si su mensaje fue solo un saludo sin pedir nada en concreto, responde solo con algo breve como "¿En qué te puedo ayudar?". Si ya preguntó algo específico, respóndelo directamente sin preámbulo de bienvenida.\n`
+    : ""
+}
 
 INFORMACIÓN QUE PUEDES USAR:
 - Horario nacional (igual en todas las sucursales): ${HORARIO_NACIONAL}
@@ -61,7 +66,7 @@ Responde siempre en español, en un solo mensaje de WhatsApp.`;
 
 // historial: [{ role: "user"|"assistant", content: "..." }, ...]
 async function generarRespuesta({ historial, mensajeNuevo, catalogo }) {
-  const systemPrompt = construirSystemPrompt(catalogo);
+  const systemPrompt = construirSystemPrompt(catalogo, historial.length === 0);
 
   const mensajes = [
     ...historial.map((m) => ({ role: m.role, content: m.content })),
