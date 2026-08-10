@@ -26,6 +26,10 @@ const MENSAJE_BIENVENIDA = `Bienvenido a Las Espadas Brazilian Steakhouse, estoy
 
 ¡Estamos para atenderte!`;
 
+// Cuánto tiempo se queda el bot en silencio tras escalar a un asesor humano,
+// por si nadie borra la marca "EnAtencion" manualmente en Sheets.
+const ATENCION_TTL_MS = 24 * 60 * 60 * 1000;
+
 // Meta reenvía el mismo mensaje si tardamos en responder. Guardamos los IDs ya
 // procesados para no contestarle dos veces al comensal.
 const mensajesProcesados = new Map();
@@ -84,9 +88,25 @@ app.post("/webhook", async (req, res) => {
       getCatalogoConCache(),
     ]);
 
-    // Si el asesor está atendiendo a este comensal, el bot guarda silencio.
-    // (Esta bandera la puedes poner tú manualmente en Sheets, columna "ciudad" no aplica;
-    // si ya migraste la lógica de "en_atencion" desde Make, se puede añadir aquí igual.)
+    // Si un asesor está atendiendo a este comensal, el bot guarda silencio.
+    // Se activa solo al escalar (más abajo) y se desactiva sola tras
+    // ATENCION_TTL_MS, o antes si alguien borra la celda "EnAtencion" en Sheets.
+    const pausadoPorAsesor =
+      conversacion.enAtencion &&
+      Date.now() - new Date(conversacion.enAtencion).getTime() < ATENCION_TTL_MS;
+
+    if (pausadoPorAsesor) {
+      await guardarConversacion({
+        rowNumber: conversacion.rowNumber,
+        telefono,
+        nombre: nombre || conversacion.nombre,
+        historial: [...conversacion.historial, { role: "user", content: texto }],
+        ciudad: conversacion.ciudad,
+        estado: conversacion.estado,
+        enAtencion: conversacion.enAtencion,
+      });
+      return;
+    }
 
     const esConversacionNueva = conversacion.historial.length === 0;
     if (esConversacionNueva) {
@@ -133,6 +153,10 @@ app.post("/webhook", async (req, res) => {
       historial: nuevoHistorial,
       ciudad,
       estado,
+      // Al escalar, se marca la hora para que el bot quede en silencio con
+      // este comensal. Para reactivarlo antes de que expire solo, borra el
+      // valor de la columna "EnAtencion" en la hoja Conversaciones.
+      enAtencion: requiereAsesor ? new Date().toISOString() : "",
     });
 
     if (queja) {

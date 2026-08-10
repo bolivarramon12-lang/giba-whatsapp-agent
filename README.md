@@ -21,11 +21,15 @@ Usa la misma hoja donde ya tienes "Catalogo Sucursales" (Ciudad/Estado/Sucursal/
 Agrega una pestaña nueva llamada **Conversaciones** con estos encabezados en la fila 1:
 
 ```
-Telefono | Nombre | Historial | Ciudad | Estado | UltimaActualizacion
+Telefono | Nombre | Historial | Ciudad | Estado | UltimaActualizacion | EnAtencion
 ```
 
 El "Estado" se llena solo: en cuanto el bot detecta la ciudad del comensal, la busca en el
 catálogo de sucursales y guarda el Estado correspondiente — no hace falta pedírselo aparte.
+
+"EnAtencion" también se llena sola: cuando el comensal pide hablar con un asesor, se guarda ahí
+la fecha/hora y el bot deja de responderle automáticamente (por 24 horas, o hasta que borres el
+valor de esa celda a mano para reactivarlo antes).
 
 Agrega otra pestaña llamada **Quejas** con estos encabezados en la fila 1:
 

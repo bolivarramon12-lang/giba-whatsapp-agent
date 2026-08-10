@@ -53,13 +53,21 @@ async function getConversacion(telefono) {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: rango(SHEET_CONVERSACIONES, "A:F"),
+    range: rango(SHEET_CONVERSACIONES, "A:G"),
   });
   const rows = res.data.values || [];
   const rowIndex = rows.findIndex((r) => r[0] === telefono);
 
   if (rowIndex === -1) {
-    return { rowNumber: null, telefono, nombre: "", historial: [], ciudad: "", estado: "" };
+    return {
+      rowNumber: null,
+      telefono,
+      nombre: "",
+      historial: [],
+      ciudad: "",
+      estado: "",
+      enAtencion: "",
+    };
   }
 
   const row = rows[rowIndex];
@@ -77,11 +85,20 @@ async function getConversacion(telefono) {
     historial,
     ciudad: row[3] || "",
     estado: row[4] || "",
+    enAtencion: row[6] || "",
   };
 }
 
 // Guarda (upsert) la conversación actualizada del comensal
-async function guardarConversacion({ rowNumber, telefono, nombre, historial, ciudad, estado }) {
+async function guardarConversacion({
+  rowNumber,
+  telefono,
+  nombre,
+  historial,
+  ciudad,
+  estado,
+  enAtencion,
+}) {
   const sheets = await getSheetsClient();
   const historialRecortado = historial.slice(-MAX_MENSAJES_HISTORIAL);
   const valores = [
@@ -91,19 +108,20 @@ async function guardarConversacion({ rowNumber, telefono, nombre, historial, ciu
     ciudad || "",
     estado || "",
     new Date().toISOString(),
+    enAtencion || "",
   ];
 
   if (rowNumber) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: rango(SHEET_CONVERSACIONES, `A${rowNumber}:F${rowNumber}`),
+      range: rango(SHEET_CONVERSACIONES, `A${rowNumber}:G${rowNumber}`),
       valueInputOption: "RAW",
       requestBody: { values: [valores] },
     });
   } else {
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: rango(SHEET_CONVERSACIONES, "A:F"),
+      range: rango(SHEET_CONVERSACIONES, "A:G"),
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
       requestBody: { values: [valores] },
