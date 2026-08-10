@@ -15,6 +15,9 @@ app.use(express.json());
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 const ASESOR_WHATSAPP_NUMERO = process.env.ASESOR_WHATSAPP_NUMERO;
 
+const MENSAJE_BIENVENIDA =
+  "Bienvenido a Las Espadas Brazilian Steakhouse, estoy aqui para ayudarte con Horarios, Ubicaciones, Reservaciones, quejas y/o Sujerencias  o Promociones (En listado) o si necesitas hablar con uno de nuestros agentes, estamos para atenderte";
+
 // Meta reenvía el mismo mensaje si tardamos en responder. Guardamos los IDs ya
 // procesados para no contestarle dos veces al comensal.
 const mensajesProcesados = new Map();
@@ -77,6 +80,11 @@ app.post("/webhook", async (req, res) => {
     // (Esta bandera la puedes poner tú manualmente en Sheets, columna "ciudad" no aplica;
     // si ya migraste la lógica de "en_atencion" desde Make, se puede añadir aquí igual.)
 
+    const esConversacionNueva = conversacion.historial.length === 0;
+    if (esConversacionNueva) {
+      await enviarMensaje(telefono, MENSAJE_BIENVENIDA);
+    }
+
     const { texto: respuesta, requiereAsesor, ciudadDetectada, queja } = await generarRespuesta({
       historial: conversacion.historial,
       mensajeNuevo: texto,
@@ -85,10 +93,17 @@ app.post("/webhook", async (req, res) => {
 
     await enviarMensaje(telefono, respuesta);
 
+    // El mensaje de bienvenida se manda aparte (fijo, sin pasar por Claude),
+    // pero se guarda junto con la respuesta para que quede registro completo
+    // del turno en el historial.
+    const respuestaGuardada = esConversacionNueva
+      ? `${MENSAJE_BIENVENIDA}\n\n${respuesta}`
+      : respuesta;
+
     const nuevoHistorial = [
       ...conversacion.historial,
       { role: "user", content: texto },
-      { role: "assistant", content: respuesta },
+      { role: "assistant", content: respuestaGuardada },
     ];
 
     // Si Claude detectó la ciudad en este turno, buscamos su Estado en el
